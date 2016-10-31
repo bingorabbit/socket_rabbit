@@ -19,6 +19,7 @@ def heavy_task():
     channel.basic_publish(exchange='', routing_key='heavy_task', body="Process this.")
 
 
+# If I use threading instead of eventlet, then socketio.emit is tied to a different thread and the client never receives
 def task_complete():
     socketio.emit('task_complete', "All done, here you go: ___")
 
@@ -34,6 +35,7 @@ def start_pika():
     channel.start_consuming()
 
 
+# At this point, pika starts, server starts - but server isn't receiving any 'emit's from client.
 if __name__ == '__main__':
     eventlet.spawn(start_pika)
     port = int(os.environ.get("PORT", 5000))

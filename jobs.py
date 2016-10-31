@@ -1,6 +1,6 @@
 import time, pika
 
-def heavy_task(ch, method, properties, body):
+def heavy_task():
     time.sleep(10)
     channel.basic_publish(exchange='', routing_key='task_complete', body="Done")
 
