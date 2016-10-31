@@ -1,0 +1,17 @@
+<!doctype html>
+<html>
+<head>
+  <script src="http://localhost:5000/socket.io/socket.io.js"></script>
+  <script>
+    var socket = io();
+    io.on('connection', function (socket) {
+      socket.emit('heavy_task', '');
+      socket.on('task_initiated', function(msg) {console.log(msg)});
+      socket.on('task_complete', function(msg) {console.log(msg)});
+    });
+  </script>
+</head>
+<body>
+  <h1>Open console</h1>
+</body>
+</html>
