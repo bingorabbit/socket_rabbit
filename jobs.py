@@ -1,14 +1,21 @@
-import time, pika
+import time
+from kombu import Connection, Exchange, Queue, Producer, Consumer
+from kombu.async import Hub
 
-def task_start():
-    print('in job:task:start')
+hub = Hub()
+exchange = Exchange('jobs')
+queue = Queue('task:start', exchange, 'task:start')
+conn = Connection('amqp://')
+conn.register_with_event_loop(hub)
+producer = Producer(conn)
+
+
+def task_start(data):
+    print('in jobs:task_start')
     time.sleep(10)
-    channel.basic_publish(routing_key='task:complete', body="Done")
+    producer.publish('All done.', exchange=exchange, routing_key='task:complete')
 
-connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
-channel = connection.channel(exchange='jobs', )
-channel.queue_declare(queue='task:start')
-channel.queue_declare(queue='task:complete')
-channel.basic_consume(task_start, queue='task:start', no_ack=True)
+
+with Consumer(conn, [queue], on_message=task_start):
+    hub.run_forever()
 print(' [*] Waiting for messages. To exit press CTRL+C')
-channel.start_consuming()
