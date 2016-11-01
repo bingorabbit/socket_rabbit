@@ -1,14 +1,12 @@
 <!doctype html>
 <html>
 <head>
-  <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/socket.io/1.3.6/socket.io.min.js"></script>
+  <script src="socket.io-1.4.5.js"></script>
   <script type="text/javascript" charset="utf-8">
-      var socket = io.connect('http://localhost:5000');
-      socket.on('connection', function () {
-        socket.emit('heavy_task', '');
-        socket.on('task_initiated', function(msg) {console.log(msg)});
-        socket.on('task_complete', function(msg) {console.log(msg)});
-      });
+      let socket = io.connect('http://localhost:5000');
+      socket.on('connect', () => socket.emit('task:start', ''));
+      socket.on('task:started', (msg) => console.log(msg));
+      socket.on('task:complete', (msg) => console.log(msg));
   </script>
 </head>
 <body>

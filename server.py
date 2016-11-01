@@ -1,42 +1,32 @@
 import eventlet
 eventlet.monkey_patch()
 
-import os, pika
+import os
 from flask import Flask
 from flask_socketio import SocketIO
 from flask_cors import CORS
 
-SECRET_KEY = 'super-secret'
 app = Flask(__name__)
-CORS(app)
-app.config['SECRET_KEY'] = SECRET_KEY
+app.config['SECRET_KEY'] = 'super-secret'
+CORS(app,resources={r"/*":{"origins":"*"}})
 socketio = SocketIO(app)
+rabbit = SocketIO(message_queue='amqp://guest:guest@localhost:5672//', channel='jobs')
 
 
-@socketio.on("heavy_task")
-def heavy_task():
-    socketio.emit('task_initiated', "Hang tight, working in it.")
-    channel.basic_publish(exchange='', routing_key='heavy_task', body="Process this.")
+@socketio.on("task:start")
+def task_start(data):
+    print('in socket:task:start')
+    socketio.emit('task:started', "Hang tight, working in it.")
+    rabbit.emit('task:start', "Process this.")
 
 
 # If I use threading instead of eventlet, then socketio.emit is tied to a different thread and the client never receives
-def task_complete():
-    socketio.emit('task_complete', "All done, here you go: ___")
-
-
-channel = None
-def start_pika():
-    global channel
-    connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
-    channel = connection.channel()
-    channel.queue_declare(queue='heavy_task')
-    channel.queue_declare(queue='task_complete')
-    channel.basic_consume(task_complete, queue='task_complete', no_ack=True)
-    channel.start_consuming()
+@rabbit.on("task:complete")
+def task_complete(data):
+    print('in rabbit:task:complete')
+    socketio.emit('task:complete', "All done, here you go: ___")
 
 
 # At this point, pika starts, server starts - but server isn't receiving any 'emit's from client.
 if __name__ == '__main__':
-    eventlet.spawn(start_pika)
-    port = int(os.environ.get("PORT", 5000))
-    socketio.run(app, host='0.0.0.0', port=port, debug=True)
+    socketio.run(app, host='0.0.0.0', port=5000, debug=True)

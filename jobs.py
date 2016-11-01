@@ -1,13 +1,14 @@
 import time, pika
 
-def heavy_task():
+def task_start():
+    print('in job:task:start')
     time.sleep(10)
-    channel.basic_publish(exchange='', routing_key='task_complete', body="Done")
+    channel.basic_publish(routing_key='task:complete', body="Done")
 
 connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
-channel = connection.channel()
-channel.queue_declare(queue='heavy_task')
-channel.queue_declare(queue='task_complete')
-channel.basic_consume(heavy_task, queue='heavy_task', no_ack=True)
+channel = connection.channel(exchange='jobs', )
+channel.queue_declare(queue='task:start')
+channel.queue_declare(queue='task:complete')
+channel.basic_consume(task_start, queue='task:start', no_ack=True)
 print(' [*] Waiting for messages. To exit press CTRL+C')
 channel.start_consuming()
